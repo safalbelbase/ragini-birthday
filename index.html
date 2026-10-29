@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>a little birthday kingdom · for Ragini</title>
+<meta name="description" content="a tiny 3D fairytale kingdom, made just for Ragini">
+<meta name="theme-color" content="#150f36">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>✦</text></svg>">
+<link rel="preload" href="fonts/fraunces-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/nunito-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles/fonts.css">
+<link rel="stylesheet" href="styles/styles.css">
+</head>
+
+<body>
+
+<canvas id="scene" aria-hidden="true"></canvas>
+<div class="glow-frame" aria-hidden="true"></div>
+
+<div id="ui">
+
+  <!-- ======================= START ======================= -->
+  <section class="screen screen--center is-on" id="startScreen">
+    <div class="start-inner">
+      <span class="sparkle sparkle--1" aria-hidden="true">✦</span>
+      <span class="sparkle sparkle--2" aria-hidden="true">✧</span>
+      <span class="sparkle sparkle--3" aria-hidden="true">✦</span>
+      <p class="eyebrow" data-c="eyebrow"></p>
+      <h1 class="title" data-c="title"></h1>
+      <p class="subtitle" data-c="subtitle"></p>
+      <button type="button" class="btn btn--magic" id="startBtn" data-c="startBtn"></button>
+      <p class="tiny" data-c="startNote"></p>
+    </div>
+  </section>
+
+  <!-- ========================= HUD ======================== -->
+  <div class="hud" id="hud" hidden>
+    <div class="hud__top">
+      <span class="pill" id="progress">✦ 0 / 8</span>
+      <button type="button" class="icon-btn" id="soundBtn" aria-pressed="false" aria-label="sound">♪</button>
+    </div>
+    <p class="hud__hint" id="hint" data-c="hint"></p>
+    <div class="hud__bar" id="barWrap" hidden>
+      <p class="hud__line" id="barLine"></p>
+      <button type="button" class="btn btn--magic btn--small" id="wishBtn" data-c="wishBtn"></button>
+    </div>
+  </div>
+
+  <!-- ================== MESSAGE CARD (a wish) ============= -->
+  <div class="sheet" id="card" hidden>
+    <div class="sheet__body">
+      <span class="sheet__star" aria-hidden="true">✦</span>
+      <p class="sheet__text" id="cardText"></p>
+      <p class="sheet__tap" id="cardTap" data-c="cardTap">tap to keep going</p>
+    </div>
+  </div>
+
+  <!-- ======================= FINALE ======================= -->
+  <section class="screen screen--center" id="finale" hidden>
+    <div class="finale-card">
+      <p class="eyebrow" data-c="finaleEyebrow"></p>
+      <h2 class="title title--small" id="finaleTitle"></h2>
+      <div class="finale-lines" id="finaleLines"></div>
+      <div class="finale-actions">
+        <button type="button" class="btn btn--magic" id="againBtn" data-c="againBtn"></button>
+        <button type="button" class="btn btn--ghost" id="readBtn" data-c="readBtn"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================== ALL THE WISHES =================== -->
+  <div class="sheet sheet--list" id="wishes" hidden>
+    <div class="sheet__body">
+      <span class="sheet__star" aria-hidden="true">✦</span>
+      <h2 class="sheet__title">the eight wishes</h2>
+      <div class="wishes-list" id="wishesList"></div>
+      <button type="button" class="btn btn--ghost btn--small" id="wishesClose">close</button>
+    </div>
+  </div>
+
+  <!-- ======================= NO WEBGL ===================== -->
+  <section class="screen screen--center" id="noGl" hidden>
+    <div class="start-inner">
+      <h1 class="title title--small" data-c="noGlTitle"></h1>
+      <p class="subtitle" data-c="noGlText"></p>
+    </div>
+  </section>
+
+  <p class="sr-only" role="status" aria-live="polite" id="live"></p>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
