@@ -8,6 +8,8 @@ import { sfx } from "./audio.js";
 
 const HOME = { theta: 0.55, phi: 1.16, radius: 15, target: [0, 1.7, 0] };
 const CAKE_VIEW = { theta: 0.1, phi: 1.24, radius: 7.4, target: [0, 1.35, 2.3] };
+const EAT_VIEW = { theta: -0.62, phi: 1.04, radius: 3.2, target: [-2.0, 0.5, 1.3] };
+const GATE_VIEW = { theta: 0.14, phi: 1.34, radius: 4.8, target: [0, 1.2, -2.5] };
 
 export function createGame({ canvas, callbacks }) {
   const cb = callbacks || {};
@@ -64,6 +66,7 @@ export function createGame({ canvas, callbacks }) {
       return;
     }
     sfx("whoosh");
+    dbg.fly = (dbg.fly || 0) + 1;
     tween = {
       from: {
         theta: cam.theta,
@@ -86,6 +89,7 @@ export function createGame({ canvas, callbacks }) {
     cam.phi = tween.from.phi + (tween.to.phi - tween.from.phi) * k;
     cam.radius = tween.from.radius + (tween.to.radius - tween.from.radius) * k;
     cam.target.lerpVectors(tween.from.target, new window.THREE.Vector3(...tween.to.target), k);
+    applyCamera();   // the camera has to actually move, every frame of the flight
     if (tween.t >= tween.dur) {
       const done = tween.done;
       tween = null;
@@ -147,8 +151,8 @@ export function createGame({ canvas, callbacks }) {
     if (moved > 8) {
       dragging = true;
       /* don't orphan a scripted flight: run its done() before killing the tween */
-      if (tween && tween.done) { const d = tween.done; tween = null; d(); }
-      else tween = null;
+      if (tween && tween.done) { const d = tween.done; tween = null; dbg.kill = (dbg.kill || 0) + 1; d(); }
+      else if (tween) { tween = null; dbg.kill = (dbg.kill || 0) + 1; }
       autoSpin = false;
       lastTouch = performance.now();
       cam.theta -= dx * 0.0062;
@@ -190,13 +194,36 @@ export function createGame({ canvas, callbacks }) {
     lastTouch = performance.now();
 
     if (state === "collect") {
-      const targets = world.orbs.filter((o) => !o.userData.gone).map((o) => o.userData.hit);
+      /* only the currently lit star can be tapped */
+      const targets = world.orbs
+        .filter((o) => !o.userData.gone && o.userData.active)
+        .map((o) => o.userData.hit);
       const hit = pick(targets, e);
       const p = ndc(e);
       dbg.hits = { n: targets.length, got: !!hit, e: [Math.round(p.x * 100), Math.round(p.y * 100)] };
       if (hit) {
         const orb = world.orbs.find((o) => o.userData.hit === hit);
         if (orb) collect(orb);
+      }
+      return;
+    }
+
+    if (state === "eat") {
+      const hit = pick([world.sliceHit], e);
+      if (!hit) return;
+      const b = world.biteSlice();
+      if (!b) return;
+      sfx("nom");
+      if (navigator.vibrate) { try { navigator.vibrate(16); } catch (_) {} }
+      if (cb.onBite) cb.onBite(b);
+      if (world.sliceState === "eaten" && b >= 3) {
+        later(() => {
+          state = "castle";
+          sfx("whoosh");
+          flyTo(GATE_VIEW, reduced ? 0 : 2.2, () => {
+            if (cb.onCastleAhead) cb.onCastleAhead();
+          });
+        }, 900);
       }
       return;
     }
@@ -213,7 +240,7 @@ export function createGame({ canvas, callbacks }) {
   }
 
   /* ------------------------------------------------------------- state --- */
-  let state = "idle"; // idle | collect | flight | candles | wish | finale
+  let state = "idle"; // idle | collect | flight | candles | wish | finale | eat | castle
   let found = 0;
   const total = 8;
   let pendingFlight = false;
@@ -233,6 +260,8 @@ export function createGame({ canvas, callbacks }) {
     world.burst(p, 0xffe08a, { count: 34, speed: 3.2, life: 1.1, size: 0.3, gravity: 3 });
     if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} }
     found++;
+    /* light up the next star in line */
+    if (found < total) world.focusOrb(found);
     if (cb.onStar) cb.onStar(i, found, total);
     if (found >= total) pendingFlight = true;
   }
@@ -242,11 +271,13 @@ export function createGame({ canvas, callbacks }) {
     if (!pendingFlight || state !== "collect") return;
     pendingFlight = false;
     state = "flight";
+    autoSpin = false;   // the cake shot must hold still — candles are small targets
     sfx("sparkle");
     if (cb.onAllStars) cb.onAllStars();
+    /* the cake starts surfacing while the camera is still flying — no dead pedestal */
+    world.showCake();
     flyTo(CAKE_VIEW, reduced ? 0 : 2.1, () => {
       world.wakeCastle();
-      world.showCake();
       state = "candles";
       if (cb.onCakeReady) onCakeReadySafe();
     });
@@ -305,8 +336,19 @@ export function createGame({ canvas, callbacks }) {
     flyTo({ theta: 0.5, phi: 1.12, radius: 13.5, target: [0, 2.2, 1.2] }, reduced ? 0 : 2.4);
 
     later(() => {
-      if (cb.onFinale) cb.onFinale();
+      if (cb.onCutReady) cb.onCutReady();
     }, 300 + shots * 330 + 700);
+  }
+
+  /* slice time: the cake gets cut while the camera dives to the table */
+  function cutCake() {
+    if (state !== "finale") return;
+    sfx("cut");
+    world.cutSlice();
+    flyTo(EAT_VIEW, reduced ? 0 : 1.5, () => {
+      state = "eat";
+      if (cb.onEatReady) cb.onEatReady();
+    });
   }
 
   function reset() {
@@ -315,6 +357,8 @@ export function createGame({ canvas, callbacks }) {
     pendingFlight = false;
     found = 0;
     world.restoreOrbs();
+    world.focusOrb(0);
+    world.resetSlice();
     world.puffCandles();
     world.hideCake();
     world.sleepCastle();
@@ -332,6 +376,7 @@ export function createGame({ canvas, callbacks }) {
   function begin() {
     state = "collect";
     autoSpin = true;
+    world.focusOrb(0);
     flyTo(HOME, reduced ? 0 : 1.6);
     if (reduced) applyCamera();
   }
@@ -415,13 +460,28 @@ export function createGame({ canvas, callbacks }) {
     });
   }
 
+  /* where the cake slice is on screen (for testing the eating part) */
+  function sliceScreens() {
+    scene.updateMatrixWorld(true);
+    const v = world.sliceHit.getWorldPosition(new window.THREE.Vector3());
+    const p = v.project(camera);
+    return [{
+      x: (p.x * 0.5 + 0.5) * window.innerWidth,
+      y: (-p.y * 0.5 + 0.5) * window.innerHeight,
+      front: p.z < 1,
+      s: world.sliceState,
+    }];
+  }
+
   /* debug helper: aim a ray at a screen point and say what it hits */
   function debugRay(cx, cy) {
     const r = canvas.getBoundingClientRect();
     const nx = ((cx - r.left) / r.width) * 2 - 1;
     const ny = -((cy - r.top) / r.height) * 2 + 1;
     ray.setFromCamera(new window.THREE.Vector2(nx, ny), camera);
-    const targets = world.orbs.filter((o) => !o.userData.gone).map((o) => o.userData.hit);
+    const targets = world.orbs
+      .filter((o) => !o.userData.gone && o.userData.active)
+      .map((o) => o.userData.hit);
     const hits = ray.intersectObjects(targets, false);
     return {
       state,
@@ -436,13 +496,16 @@ export function createGame({ canvas, callbacks }) {
     start: begin,
     cardClosed,
     makeWish,
+    cutCake,
     reset,
     orbScreens,
     candleScreens,
+    sliceScreens,
     debugRay,
     dbg,
     get state() { return state; },
     get found() { return found; },
+    get world() { return world; },
     dispose() {
       cancelAnimationFrame(raf);
       running = false;

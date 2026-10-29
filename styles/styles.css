@@ -179,6 +179,9 @@ html,body{
   animation:sheet-up .5s var(--ease) both;
 }
 .hud__line{ margin:0; font-family:var(--f-title); font-size:22px; color:var(--gold); }
+.hud__sub{ margin:8px 0 0; font-size:15px; line-height:1.45; color:var(--ink-dim); }
+.hud__bar .btn--ghost{ min-height:52px; font-size:16px; padding:0 26px; margin-top:14px; }
+button.pill{ font-family:var(--f-body); cursor:pointer; }
 
 /* =========================================================== wish sheet === */
 .sheet{

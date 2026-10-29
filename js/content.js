@@ -28,18 +28,24 @@ export const TEXT = {
   allFoundLine: "you found them all",
   allFoundSub: "the castle is waking up…",
   cakeLine: "tap the candles to light them",
-  wishBtn: "make a wish",
-  wishLine: "close your eyes and tap ✦",
 
-  finaleEyebrow: "and so…",
-  finaleTitle: "happy birthday, Ragini",
-  finaleLines: [
-    "eight stars, one cake, one very happy bestie.",
-    "no ignoring my texts today, deal?",
-    "made just for you, from your best friend.",
+  /* the wish moment — she gets her time here */
+  wishLine: "close your eyes, make a wish",
+  wishSub: "you're turning 18. take your time. the candles will wait ✦",
+  wishBtn: "i made my wish ✓",
+
+  cutLine: "now the best part. cut the first slice!",
+  cutBtn: "cut a slice ✦",
+  eatHint: "tap the slice. it's yours. eat up ✦",
+  biteLines: [
+    "first bite. approved.",
+    "second bite. even better.",
+    "okay that's the whole slice. worth it.",
   ],
+  afterEat: "you're officially 18 now. one last thing is waiting in the castle ✦",
   readBtn: "see the wishes again",
   againBtn: "play it again",
+  pillWishes: "✦ wishes",
 
   noGlTitle: "this phone says no",
   noGlText: "the kingdom needs 3D. try chrome or safari, or open it on a laptop.",

@@ -100,7 +100,7 @@ export function createWorld() {
   const moonLight = new T.DirectionalLight(0xd9e4ff, 0.75);
   moonLight.position.set(-30, 40, -25);
   scene.add(moonLight);
-  const warm = new T.PointLight(0xffd9a0, 0, 26, 2);
+  const warm = new T.PointLight(0xffd9a0, 0, 10, 2);
   warm.position.set(0, 3.4, 2.4);
   scene.add(warm);
 
@@ -318,25 +318,109 @@ export function createWorld() {
     );
     g.add(hit);
 
-    g.userData = { index: i, base: g.position.y, phase: i * 0.8, core, halo, ring, hit, gone: false };
+    g.userData = { index: i, base: g.position.y, phase: i * 0.8, core, halo, ring, hit, gone: false, active: i === 0, fa: null };
     scene.add(g);
     orbs.push(g);
   }
 
-  /* ---- birthday cake (rises later) ---- */
+  /* one star lights up at a time — the player's attention gets a hint */
+  function focusOrb(i) {
+    orbs.forEach((o) => {
+      o.userData.active = o.userData.index === i;
+    });
+  }
+
+  /* ---- birthday cake (rises later) — with a real 45° slice to cut out ---- */
   const cake = new T.Group();
   cake.position.set(0, -5, 2.5);
   cake.visible = false;
   scene.add(cake);
 
-  const tier1 = new T.Mesh(new T.CylinderGeometry(1.2, 1.2, 0.55, 26), mat(0xfff7fb, { flatShading: false }));
-  tier1.position.y = 0.28;
-  const tier2 = new T.Mesh(new T.CylinderGeometry(0.85, 0.85, 0.5, 26), mat(0xffd7ec, { flatShading: false }));
-  tier2.position.y = 0.8;
-  const drip = new T.Mesh(new T.TorusGeometry(0.85, 0.08, 8, 26), mat(0xff9ecb, { flatShading: false }));
+  const SLICE = Math.PI / 4; // the wedge, facing the camera (+z)
+
+  function pieTier(r, h, y, color, cutColor, parent) {
+    /* the cake minus the slice: capped shell + the two crumb faces left behind */
+    const g = new T.Group();
+    const shell = new T.Mesh(
+      new T.CylinderGeometry(r, r, h, 22, 1, false, SLICE / 2, Math.PI * 2 - SLICE),
+      mat(color, { flatShading: false })
+    );
+    shell.position.y = y;
+    g.add(shell);
+    [-SLICE / 2, SLICE / 2].forEach((a) => {
+      const holder = new T.Group();
+      const face = new T.Mesh(new T.PlaneGeometry(r, h), mat(cutColor, { flatShading: false }));
+      face.position.x = r / 2;
+      holder.add(face);
+      holder.position.y = y;
+      holder.rotation.y = a - Math.PI / 2;
+      g.add(holder);
+    });
+    parent.add(g);
+  }
+
+  pieTier(1.2, 0.55, 0.28, 0xffdcea, 0xcf9fb8, cake);
+  pieTier(0.85, 0.5, 0.8, 0xffc2da, 0xc982a3, cake);
+  const drip = new T.Mesh(
+    new T.TorusGeometry(0.85, 0.08, 8, 26, Math.PI * 2 - SLICE),
+    mat(0xff9ecb, { flatShading: false })
+  );
+  const dripG = new T.Group();
+  dripG.rotation.y = SLICE / 2;
   drip.rotation.x = Math.PI / 2;
   drip.position.y = 1.03;
-  cake.add(tier1, tier2, drip);
+  dripG.add(drip);
+  cake.add(dripG);
+
+  /* the slice itself, filling the notch exactly */
+  const wedge = new T.Group();
+  cake.add(wedge);
+  function wedgeTier(r, h, y, color, cutColor) {
+    const g = new T.Group();
+    const piece = new T.Mesh(
+      new T.CylinderGeometry(r, r, h, 10, 1, false, -SLICE / 2, SLICE),
+      mat(color, { flatShading: false })
+    );
+    piece.position.y = y;
+    g.add(piece);
+    [-SLICE / 2, SLICE / 2].forEach((a) => {
+      const holder = new T.Group();
+      const face = new T.Mesh(new T.PlaneGeometry(r, h), mat(cutColor, { flatShading: false }));
+      face.position.x = r / 2;
+      holder.add(face);
+      holder.position.y = y;
+      holder.rotation.y = a - Math.PI / 2;
+      g.add(holder);
+    });
+    wedge.add(g);
+  }
+  wedgeTier(1.2, 0.55, 0.28, 0xffdcea, 0xcf9fb8);
+  wedgeTier(0.85, 0.5, 0.8, 0xffc2da, 0xc982a3);
+
+  /* a cherry on top of the slice, because obviously */
+  const cherry = new T.Mesh(
+    new T.SphereGeometry(0.09, 10, 8),
+    new T.MeshLambertMaterial({ color: 0xff5d7d, flatShading: false })
+  );
+  cherry.position.set(0.42, 1.14, 0);
+  wedge.add(cherry);
+
+  /* fat invisible cushion so taps on the slice always land */
+  const sliceHit = new T.Mesh(
+    new T.SphereGeometry(0.72, 8, 6),
+    new T.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+  );
+  sliceHit.position.set(0.5, 0.6, 0);
+  wedge.add(sliceHit);
+
+  /* the plate the slice lands on, far enough that the slice doesn't kiss the cake */
+  const plate = new T.Mesh(
+    new T.CylinderGeometry(1.04, 0.96, 0.07, 18),
+    mat(0xf3eef7, { flatShading: false })
+  );
+  plate.position.set(-2.2, 0.045, 1.1);
+  plate.visible = false;
+  cake.add(plate);
 
   const candles = [];
   const flameMap = glowTex();
@@ -467,13 +551,19 @@ export function createWorld() {
     clouds.rotation.y += dt * 0.008;
     flag.rotation.y = Math.sin(t * 2.4) * 0.35;
 
-    // wish stars bob and spin
+    // wish stars bob and spin (only the active one shines)
     for (const o of orbs) {
       const u = o.userData;
       if (u.gone) continue;
+      const target = u.active ? 1 : 0.14;
+      if (u.fa == null) u.fa = target;
+      u.fa += (target - u.fa) * Math.min(1, dt * 6);
       o.position.y = u.base + Math.sin(t * 1.2 + u.phase) * 0.24;
       u.ring.rotation.z += dt * 1.1;
-      u.halo.material.opacity = 0.65 + Math.sin(t * 2.6 + u.phase) * 0.2;
+      u.halo.material.opacity = (0.65 + Math.sin(t * 2.6 + u.phase) * 0.2) * u.fa;
+      u.ring.material.opacity = 0.55 * u.fa;
+      u.core.material.emissiveIntensity = 0.95 * u.fa + 0.05;
+      u.hit.visible = !!u.active;
       const s = 1 + Math.sin(t * 3.1 + u.phase) * 0.06;
       u.core.scale.setScalar(s);
     }
@@ -500,7 +590,7 @@ export function createWorld() {
         const k = Math.min(1, Math.max(0, warmGlow * 2 - i * 0.12));
         w.material.color.setHex(0x6a5f8f).lerp(new T.Color(0xffd98a), k);
       });
-      warm.intensity = 1.6 * Math.min(1, warmGlow);
+      warm.intensity = 0.58 * Math.min(1, warmGlow);
     }
 
     // cake rising
@@ -517,6 +607,19 @@ export function createWorld() {
         const f = 1 + Math.sin(t * 9 + c.phase) * 0.14;
         c.flame.scale.set(0.42 * f, 0.56 * (2 - f), 1);
         c.flame.material.opacity = 0.85 + Math.sin(t * 11 + c.phase) * 0.15;
+      }
+    }
+
+    // pull the slice out of the cake and onto its plate
+    if (sliceState === "cutting") {
+      cutT = Math.min(1, cutT + dt * 0.85);
+      const e = easeInOutCubic(cutT);
+      wedge.position.set(-2.2 * e, Math.sin(e * Math.PI) * 0.9 + 0.08 * e, 1.1 * e);
+      wedge.rotation.y = e * -0.94;   // a cut face turns toward the cake-eating camera
+      if (e > 0.55) plate.visible = true;
+      if (cutT >= 1) {
+        sliceState = "plate";
+        cutT = 0;
       }
     }
 
@@ -581,13 +684,83 @@ export function createWorld() {
     orbs.forEach((o) => {
       o.userData.gone = false;
       o.visible = true;
+      o.userData.active = false;
     });
+  }
+
+  /* ---- the slice ---- */
+  let sliceState = "whole";   // whole | cutting | plate | eaten
+  let cutT = 0;
+  let bites = 0;
+
+  function cutSlice() {
+    if (sliceState !== "whole") return false;
+    sliceState = "cutting";
+    cutT = 0;
+    // the candle standing in the slice comes along for the ride
+    const c = candles[2];
+    if (c && c.stick) {
+      // remember where it lives so resetSlice can put it back exactly
+      if (!c.home) {
+        c.home = {
+          stick: { p: c.stick.position.clone(), r: c.stick.rotation.clone(), s: c.stick.scale.clone() },
+          flame: c.flame ? { p: c.flame.position.clone(), r: c.flame.rotation.clone(), s: c.flame.scale.clone() } : null,
+          hit: c.hit ? { p: c.hit.position.clone(), r: c.hit.rotation.clone(), s: c.hit.scale.clone() } : null,
+        };
+      }
+      wedge.attach(c.stick);
+      if (c.flame) wedge.attach(c.flame);
+      if (c.hit) wedge.attach(c.hit);
+    }
+    return true;
+  }
+
+  function biteSlice() {
+    if (sliceState !== "plate") return false;
+    bites++;
+    const wp = new T.Vector3();
+    sliceHit.getWorldPosition(wp);
+    burst(wp, 0xffd7ec, { count: 24, speed: 2.4, life: 0.9, size: 0.22, gravity: 3.6 });
+    if (bites >= 3) {
+      sliceState = "eaten";
+      wedge.visible = false;
+    } else {
+      const s = bites === 1 ? 0.72 : 0.45;
+      wedge.scale.setScalar(s);
+    }
+    return bites;
+  }
+
+  function resetSlice() {
+    // candle returns to the cake
+    const c = candles[2];
+    if (c && c.stick) {
+      if (c.stick.parent !== cake) cake.attach(c.stick);
+      if (c.flame && c.flame.parent !== cake) cake.attach(c.flame);
+      if (c.hit && c.hit.parent !== cake) cake.attach(c.hit);
+      const h = c.home;
+      if (h) {
+        c.stick.position.copy(h.stick.p); c.stick.rotation.copy(h.stick.r); c.stick.scale.copy(h.stick.s);
+        if (h.flame && c.flame) { c.flame.position.copy(h.flame.p); c.flame.rotation.copy(h.flame.r); c.flame.scale.copy(h.flame.s); }
+        if (h.hit && c.hit) { c.hit.position.copy(h.hit.p); c.hit.rotation.copy(h.hit.r); c.hit.scale.copy(h.hit.s); }
+      }
+    }
+    wedge.position.set(0, 0, 0);
+    wedge.rotation.y = 0;
+    wedge.scale.setScalar(1);
+    wedge.visible = true;
+    plate.visible = false;
+    sliceState = "whole";
+    cutT = 0;
+    bites = 0;
   }
 
   return {
     scene, orbs, cake, candles, castle, island, bursts,
     burst, update, wakeCastle, showCake, sleepCastle, hideCake, lightCandle,
-    puffCandles, hideOrb, restoreOrbs,
+    puffCandles, hideOrb, restoreOrbs, focusOrb,
+    cutSlice, biteSlice, resetSlice, sliceHit,
+    get sliceState() { return sliceState; },
     get cakeTop() { return new T.Vector3(0, 1.6, 2.5); },
   };
 }

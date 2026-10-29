@@ -40,12 +40,16 @@
   <div class="hud" id="hud" hidden>
     <div class="hud__top">
       <span class="pill" id="progress">✦ 0 / 8</span>
+      <span style="flex:1"></span>
+      <button type="button" class="pill" id="pillWishes" data-c="pillWishes" hidden></button>
       <button type="button" class="icon-btn" id="soundBtn" aria-pressed="false" aria-label="sound">♪</button>
     </div>
     <p class="hud__hint" id="hint" data-c="hint"></p>
     <div class="hud__bar" id="barWrap" hidden>
       <p class="hud__line" id="barLine"></p>
-      <button type="button" class="btn btn--magic btn--small" id="wishBtn" data-c="wishBtn"></button>
+      <p class="hud__sub" id="barSub" hidden></p>
+      <button type="button" class="btn btn--magic btn--small" id="barBtn" data-c="wishBtn"></button>
+      <button type="button" class="btn btn--ghost btn--small" id="barBtn2" hidden></button>
     </div>
   </div>
 
@@ -57,19 +61,6 @@
       <p class="sheet__tap" id="cardTap" data-c="cardTap">tap to keep going</p>
     </div>
   </div>
-
-  <!-- ======================= FINALE ======================= -->
-  <section class="screen screen--center" id="finale" hidden>
-    <div class="finale-card">
-      <p class="eyebrow" data-c="finaleEyebrow"></p>
-      <h2 class="title title--small" id="finaleTitle"></h2>
-      <div class="finale-lines" id="finaleLines"></div>
-      <div class="finale-actions">
-        <button type="button" class="btn btn--magic" id="againBtn" data-c="againBtn"></button>
-        <button type="button" class="btn btn--ghost" id="readBtn" data-c="readBtn"></button>
-      </div>
-    </div>
-  </section>
 
   <!-- ================== ALL THE WISHES =================== -->
   <div class="sheet sheet--list" id="wishes" hidden>

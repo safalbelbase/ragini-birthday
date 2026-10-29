@@ -108,6 +108,15 @@ export function sfx(name) {
     case "whoosh":
       noise({ dur: 0.9, type: "bandpass", freq: 420, q: 0.8, vol: 0.16, sweep: 900 });
       break;
+    case "cut": // the knife through the cake
+      noise({ dur: 0.28, type: "bandpass", freq: 1500, q: 1.4, vol: 0.18, sweep: 900 });
+      tone({ f: 300, f2: 120, dur: 0.22, type: "triangle", vol: 0.12, at: 0.05 });
+      break;
+    case "nom": // a bite
+      noise({ dur: 0.16, type: "lowpass", freq: 620, q: 0.9, vol: 0.22 });
+      tone({ f: 190, dur: 0.1, type: "triangle", vol: 0.12 });
+      tone({ f: 140, dur: 0.1, type: "triangle", vol: 0.1, at: 0.07 });
+      break;
     case "tap":
       tone({ f: 520, dur: 0.09, type: "sine", vol: 0.14 });
       break;

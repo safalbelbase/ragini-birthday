@@ -29,9 +29,6 @@ const progress = $("#progress");
 const hint = $("#hint");
 const card = $("#card");
 const cardText = $("#cardText");
-const barWrap = $("#barWrap");
-const barLine = $("#barLine");
-const finale = $("#finale");
 const noGl = $("#noGl");
 const soundBtn = $("#soundBtn");
 
@@ -76,33 +73,42 @@ function startGame() {
   progress.textContent = TEXT.progress(0, 8);
   showHint(TEXT.hint);
   game.start();
-  say("the kingdom is open. tap the glowing stars.");
+  say("the kingdom is open. one star at a time is glowing.");
 }
 
-/* -------------------------------------------------------------- finale --- */
-function showFinale() {
-  $("#finaleTitle").textContent = TEXT.finaleTitle;
-  const wrap = $("#finaleLines");
-  wrap.textContent = "";
-  TEXT.finaleLines.forEach((line, i) => {
-    const p = document.createElement("p");
-    p.textContent = line;
-    p.style.animationDelay = `${0.25 + i * 0.35}s`;
-    wrap.appendChild(p);
-  });
-  finale.hidden = false;
-  finale.classList.remove("is-in");
-  void finale.offsetWidth;
-  finale.classList.add("is-in");
-  hud.hidden = true;
-  sfx("sparkle");
-  say(TEXT.finaleTitle);
+/* ------------------------------------------------------------- the bar --- */
+const barWrap = $("#barWrap");
+const barLine = $("#barLine");
+const barSub = $("#barSub");
+const barBtn = $("#barBtn");
+const barBtn2 = $("#barBtn2");
+const pillWishes = $("#pillWishes");
+let barPhase = "wish";   // wish | cut | castle
+
+function setBar({ line, sub, btn, btn2, phase }) {
+  barLine.textContent = line;
+  if (sub) { barSub.textContent = sub; barSub.hidden = false; }
+  else barSub.hidden = true;
+  if (btn) { barBtn.textContent = btn; barBtn.hidden = false; }
+  else barBtn.hidden = true;
+  if (btn2) { barBtn2.textContent = btn2; barBtn2.hidden = false; }
+  else barBtn2.hidden = true;
+  barBtn.classList.toggle("btn--ghost", phase === "castle");
+  barPhase = phase;
+  barWrap.hidden = false;
 }
+
+barBtn.addEventListener("click", () => {
+  sfx("tap");
+  barWrap.hidden = true;
+  if (barPhase === "wish") game.makeWish();
+  else if (barPhase === "cut") game.cutCake();
+  else if (barPhase === "castle") playAgain();
+});
 
 function playAgain() {
-  finale.hidden = true;
-  hud.hidden = false;
   barWrap.hidden = true;
+  pillWishes.hidden = true;
   progress.textContent = TEXT.progress(0, 8);
   showHint(TEXT.hint);
   game.reset();
@@ -124,9 +130,10 @@ function showWishes() {
   void panel.offsetWidth;
   panel.classList.add("is-in");
 }
-function hideWishes() {
+function closeWishesPanel() {
   $("#wishes").hidden = true;
-  if (!finale.hidden) return;
+  /* the castle bar should still be there when she comes back out */
+  if (barPhase === "castle" && game && game.state === "castle") barWrap.hidden = false;
 }
 
 /* --------------------------------------------------------------- sound --- */
@@ -147,6 +154,7 @@ function boot() {
       onStar(i, n, total) {
         progress.textContent = TEXT.progress(n, total);
         showCard(TEXT.stars[i] || "✦");
+        pillWishes.hidden = false;
         if (n === total) showHint(TEXT.allFoundLine, 5000);
       },
       onAllStars() {
@@ -161,13 +169,32 @@ function boot() {
         say(`candles lit ${n} of ${total}`);
       },
       onAllCandles() {
-        barLine.textContent = TEXT.wishLine;
-        barWrap.hidden = false;
+        /* the wish moment: her time, unhurried */
+        setBar({ line: TEXT.wishLine, sub: TEXT.wishSub, btn: TEXT.wishBtn, phase: "wish" });
         showHint(TEXT.wishLine, 999000, TEXT.cakeLine);
-        say("all candles are lit. make a wish.");
+        say(`all candles are lit. ${TEXT.wishLine}.`);
       },
-      onFinale() {
-        showFinale();
+      onCutReady() {
+        setBar({ line: TEXT.cutLine, btn: TEXT.cutBtn, phase: "cut" });
+        showHint(TEXT.cutLine, 999000);
+        say(TEXT.cutLine);
+      },
+      onEatReady() {
+        showHint(TEXT.eatHint, 999000, TEXT.cutLine);
+        progress.textContent = "nom 0 / 3";
+      },
+      onBite(n) {
+        progress.textContent = `nom ${n} / 3`;
+        showCard(TEXT.biteLines[n - 1] || "✦");
+      },
+      onCastleAhead() {
+        setBar({
+          line: TEXT.afterEat,
+          btn: TEXT.againBtn,
+          btn2: TEXT.readBtn,
+          phase: "castle",
+        });
+        say("one last thing is waiting in the castle.");
       },
     },
   });
@@ -180,15 +207,10 @@ function boot() {
   window.__kingdom = game;   // handy for poking around in the console
 
   $("#startBtn").addEventListener("click", startGame);
-  $("#wishBtn").addEventListener("click", () => {
-    barWrap.hidden = true;
-    game.makeWish();
-  });
-  $("#againBtn").addEventListener("click", playAgain);
-  $("#readBtn").addEventListener("click", showWishes);
-  $("#wishesClose").addEventListener("click", () => { $("#wishes").hidden = true; });
+  pillWishes.addEventListener("click", showWishes);
+  $("#wishesClose").addEventListener("click", closeWishesPanel);
   $("#wishes").addEventListener("click", (e) => {
-    if (e.target.id === "wishes") $("#wishes").hidden = true;
+    if (e.target.id === "wishes") closeWishesPanel();
   });
 
   soundBtn.addEventListener("click", () => {
@@ -200,7 +222,7 @@ function boot() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeCard();
-      $("#wishes").hidden = true;
+      closeWishesPanel();
     }
   });
 }
