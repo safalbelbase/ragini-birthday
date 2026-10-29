@@ -8,7 +8,7 @@ import { sfx } from "./audio.js";
 
 const HOME = { theta: 0.55, phi: 1.16, radius: 15, target: [0, 1.7, 0] };
 const CAKE_VIEW = { theta: 0.1, phi: 1.24, radius: 7.4, target: [0, 1.35, 2.3] };
-const EAT_VIEW = { theta: -0.62, phi: 1.04, radius: 3.2, target: [-2.0, 0.5, 1.3] };
+const EAT_VIEW = { theta: 0.15, phi: 1.15, radius: 3.4, target: [0.25, 0.62, 4.45] };
 const GATE_VIEW = { theta: 0.14, phi: 1.34, radius: 4.8, target: [0, 1.2, -2.5] };
 
 export function createGame({ canvas, callbacks }) {
@@ -45,11 +45,27 @@ export function createGame({ canvas, callbacks }) {
     radius: HOME.radius,
     target: new window.THREE.Vector3(...HOME.target),
   };
+  const galleryCam = {
+    pos: new window.THREE.Vector3(0, 102.2, 11),
+    yaw: 0,
+    pitch: 0,
+    targetZ: 11,
+  };
   let tween = null;
   let autoSpin = true;
   let lastTouch = 0;
 
   function applyCamera() {
+    if (state === "gallery" || state === "letter") {
+      camera.position.copy(galleryCam.pos);
+      const forward = new window.THREE.Vector3(
+        -Math.sin(galleryCam.yaw) * Math.cos(galleryCam.pitch),
+        Math.sin(galleryCam.pitch),
+        -Math.cos(galleryCam.yaw) * Math.cos(galleryCam.pitch)
+      );
+      camera.lookAt(galleryCam.pos.clone().add(forward));
+      return;
+    }
     const s = new window.THREE.Spherical(cam.radius, cam.phi, cam.theta);
     camera.position.setFromSpherical(s).add(cam.target);
     camera.lookAt(cam.target);
@@ -155,8 +171,13 @@ export function createGame({ canvas, callbacks }) {
       else if (tween) { tween = null; dbg.kill = (dbg.kill || 0) + 1; }
       autoSpin = false;
       lastTouch = performance.now();
-      cam.theta -= dx * 0.0062;
-      cam.phi = Math.max(0.45, Math.min(1.5, cam.phi - dy * 0.005));
+      if (state === "gallery" || state === "letter") {
+        galleryCam.yaw += dx * 0.0055;
+        galleryCam.pitch = Math.max(-0.5, Math.min(0.5, galleryCam.pitch - dy * 0.0045));
+      } else {
+        cam.theta -= dx * 0.0062;
+        cam.phi = Math.max(0.45, Math.min(1.5, cam.phi - dy * 0.005));
+      }
       applyCamera();
     }
   });
@@ -236,6 +257,25 @@ export function createGame({ canvas, callbacks }) {
       for (const h of hits) {
         if (lightCandle(h.object.userData.candle)) break;
       }
+      return;
+    }
+
+    if (state === "gallery") {
+      const hitLetter = pick([world.letterHit], e);
+      if (hitLetter) {
+        walkToLetter();
+        return;
+      }
+      const frameHits = world.frames.map((f) => f.hit);
+      const hitFrame = pick(frameHits, e);
+      if (hitFrame) {
+        const idx = hitFrame.userData.index;
+        sfx("sparkle");
+        if (cb.onPhoto) cb.onPhoto(idx);
+        return;
+      }
+      walkForward();
+      return;
     }
   }
 
@@ -340,12 +380,12 @@ export function createGame({ canvas, callbacks }) {
     }, 300 + shots * 330 + 700);
   }
 
-  /* slice time: the cake gets cut while the camera dives to the table */
+  /* slice time: the cake gets cut while the camera dives smoothly to the plate */
   function cutCake() {
     if (state !== "finale") return;
     sfx("cut");
     world.cutSlice();
-    flyTo(EAT_VIEW, reduced ? 0 : 1.5, () => {
+    flyTo(EAT_VIEW, reduced ? 0 : 2.5, () => {
       state = "eat";
       if (cb.onEatReady) cb.onEatReady();
     });
@@ -363,6 +403,10 @@ export function createGame({ canvas, callbacks }) {
     world.hideCake();
     world.sleepCastle();
     state = "idle";
+    galleryCam.pos.set(0, 102.2, 11);
+    galleryCam.targetZ = 11;
+    galleryCam.yaw = 0;
+    galleryCam.pitch = 0;
     flyTo(HOME, reduced ? 0 : 1.4, () => {
       state = "collect";
       autoSpin = true;
@@ -371,6 +415,40 @@ export function createGame({ canvas, callbacks }) {
       state = "collect";
       autoSpin = true;
     }
+  }
+
+  function enterCastle() {
+    state = "gallery";
+    autoSpin = false;
+    galleryCam.pos.set(0, 102.2, 11);
+    galleryCam.targetZ = 11;
+    galleryCam.yaw = 0;
+    galleryCam.pitch = 0;
+    applyCamera();
+    sfx("whoosh");
+    if (cb.onCastleEntered) cb.onCastleEntered();
+  }
+
+  function walkForward() {
+    if (state !== "gallery" && state !== "letter") return;
+    sfx("tap");
+    galleryCam.targetZ = Math.max(-18.2, galleryCam.targetZ - 4.2);
+    if (galleryCam.targetZ <= -17.5) {
+      later(() => {
+        if ((state === "gallery" || state === "letter") && cb.onLetter) cb.onLetter();
+      }, 700);
+    }
+  }
+
+  function walkToLetter() {
+    if (state !== "gallery" && state !== "letter") return;
+    sfx("sparkle");
+    galleryCam.targetZ = -18.2;
+    galleryCam.yaw = 0;
+    galleryCam.pitch = -0.12;
+    later(() => {
+      if ((state === "gallery" || state === "letter") && cb.onLetter) cb.onLetter();
+    }, 600);
   }
 
   function begin() {
@@ -396,8 +474,13 @@ export function createGame({ canvas, callbacks }) {
 
     stepTween(dt);
 
+    if ((state === "gallery" || state === "letter") && Math.abs(galleryCam.pos.z - galleryCam.targetZ) > 0.01) {
+      galleryCam.pos.z += (galleryCam.targetZ - galleryCam.pos.z) * Math.min(1, dt * 5.0);
+      applyCamera();
+    }
+
     // slow drift until the player grabs the world
-    if (autoSpin && !tween && state !== "finale" && now - lastTouch > 2200) {
+    if (autoSpin && !tween && state !== "finale" && state !== "gallery" && state !== "letter" && now - lastTouch > 2200) {
       cam.theta += dt * 0.045;
       applyCamera();
     }
@@ -497,6 +580,9 @@ export function createGame({ canvas, callbacks }) {
     cardClosed,
     makeWish,
     cutCake,
+    enterCastle,
+    walkForward,
+    walkToLetter,
     reset,
     orbScreens,
     candleScreens,

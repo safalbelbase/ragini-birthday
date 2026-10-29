@@ -82,6 +82,17 @@ const barLine = $("#barLine");
 const barSub = $("#barSub");
 const barBtn = $("#barBtn");
 const barBtn2 = $("#barBtn2");
+const galleryBar = $("#galleryBar");
+const walkBtn = $("#walkBtn");
+const toLetterBtn = $("#toLetterBtn");
+const photoModal = $("#photoModal");
+const photoTitle = $("#photoTitle");
+const photoImg = $("#photoImg");
+const photoClose = $("#photoClose");
+const letterModal = $("#letterModal");
+const letterText = $("#letterText");
+const letterAgainBtn = $("#letterAgainBtn");
+const letterWishesBtn = $("#letterWishesBtn");
 const pillWishes = $("#pillWishes");
 let barPhase = "wish";   // wish | cut | castle
 
@@ -103,16 +114,55 @@ barBtn.addEventListener("click", () => {
   barWrap.hidden = true;
   if (barPhase === "wish") game.makeWish();
   else if (barPhase === "cut") game.cutCake();
-  else if (barPhase === "castle") playAgain();
+  else if (barPhase === "castle") game.enterCastle();
+});
+
+barBtn2.addEventListener("click", () => {
+  sfx("tap");
+  showWishes();
 });
 
 function playAgain() {
   barWrap.hidden = true;
+  galleryBar.hidden = true;
+  photoModal.hidden = true;
+  letterModal.hidden = true;
   pillWishes.hidden = true;
   progress.textContent = TEXT.progress(0, 8);
   showHint(TEXT.hint);
   game.reset();
   sfx("chime");
+}
+
+function openPhotoModal(index) {
+  photoTitle.textContent = TEXT.photoTitles[index] || `memory ${index + 1}`;
+  photoImg.src = `photos/${index + 1}.jpg`;
+  photoModal.hidden = false;
+  photoModal.classList.remove("is-in");
+  void photoModal.offsetWidth;
+  photoModal.classList.add("is-in");
+}
+
+function closePhotoModal() {
+  photoModal.hidden = true;
+}
+
+function openLetterModal() {
+  letterText.textContent = "";
+  TEXT.letter.forEach((para) => {
+    const p = document.createElement("p");
+    p.textContent = para;
+    letterText.appendChild(p);
+  });
+  letterModal.hidden = false;
+  letterModal.classList.remove("is-in");
+  void letterModal.offsetWidth;
+  letterModal.classList.add("is-in");
+  sfx("sparkle");
+}
+
+function closeLetterModal() {
+  letterModal.hidden = true;
 }
 
 /* ------------------------------------------------------- wishes again ---- */
@@ -190,11 +240,23 @@ function boot() {
       onCastleAhead() {
         setBar({
           line: TEXT.afterEat,
-          btn: TEXT.againBtn,
+          btn: TEXT.enterCastleBtn,
           btn2: TEXT.readBtn,
           phase: "castle",
         });
         say("one last thing is waiting in the castle.");
+      },
+      onCastleEntered() {
+        barWrap.hidden = true;
+        galleryBar.hidden = false;
+        progress.textContent = TEXT.galleryPill;
+        showHint(TEXT.galleryHint, 8000);
+      },
+      onPhoto(index) {
+        openPhotoModal(index);
+      },
+      onLetter() {
+        openLetterModal();
       },
     },
   });
@@ -213,6 +275,19 @@ function boot() {
     if (e.target.id === "wishes") closeWishesPanel();
   });
 
+  walkBtn.addEventListener("click", () => game.walkForward());
+  toLetterBtn.addEventListener("click", () => game.walkToLetter());
+  photoClose.addEventListener("click", closePhotoModal);
+  photoModal.addEventListener("click", (e) => {
+    if (e.target.id === "photoModal") closePhotoModal();
+  });
+
+  letterAgainBtn.addEventListener("click", playAgain);
+  letterWishesBtn.addEventListener("click", () => {
+    closeLetterModal();
+    showWishes();
+  });
+
   soundBtn.addEventListener("click", () => {
     setOn(!isOn());
     paintSound();
@@ -223,6 +298,8 @@ function boot() {
     if (e.key === "Escape") {
       closeCard();
       closeWishesPanel();
+      closePhotoModal();
+      closeLetterModal();
     }
   });
 }

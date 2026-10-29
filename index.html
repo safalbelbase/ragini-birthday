@@ -11,6 +11,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>✦</text></svg>">
 <link rel="preload" href="fonts/fraunces-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/nunito-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/caveat-500.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles/fonts.css">
 <link rel="stylesheet" href="styles/styles.css">
 </head>
@@ -51,6 +52,10 @@
       <button type="button" class="btn btn--magic btn--small" id="barBtn" data-c="wishBtn"></button>
       <button type="button" class="btn btn--ghost btn--small" id="barBtn2" hidden></button>
     </div>
+    <div class="hud__bar hud__gallery" id="galleryBar" hidden>
+      <button type="button" class="btn btn--magic btn--small" id="walkBtn">walk forward ✦</button>
+      <button type="button" class="btn btn--ghost btn--small" id="toLetterBtn">✦ the letter</button>
+    </div>
   </div>
 
   <!-- ================== MESSAGE CARD (a wish) ============= -->
@@ -59,6 +64,32 @@
       <span class="sheet__star" aria-hidden="true">✦</span>
       <p class="sheet__text" id="cardText"></p>
       <p class="sheet__tap" id="cardTap" data-c="cardTap">tap to keep going</p>
+    </div>
+  </div>
+
+  <!-- ================== PHOTO PREVIEW MODAL ================= -->
+  <div class="sheet sheet--photo" id="photoModal" hidden>
+    <div class="sheet__body sheet__body--photo">
+      <span class="sheet__star" aria-hidden="true">✦</span>
+      <h3 class="sheet__title" id="photoTitle">memory</h3>
+      <div class="photo-img-wrap">
+        <img id="photoImg" src="" alt="memory photo" />
+      </div>
+      <button type="button" class="btn btn--ghost btn--small" id="photoClose">close</button>
+    </div>
+  </div>
+
+  <!-- ================== PARCHMENT BIRTHDAY LETTER ================= -->
+  <div class="sheet sheet--letter" id="letterModal" hidden>
+    <div class="letter-scroll">
+      <div class="parchment">
+        <div class="parchment__seal" aria-hidden="true">✦</div>
+        <div class="parchment__body" id="letterText"></div>
+        <div class="parchment__actions">
+          <button type="button" class="btn btn--magic btn--small" id="letterAgainBtn">✦ play it again</button>
+          <button type="button" class="btn btn--ghost btn--small" id="letterWishesBtn">see the wishes</button>
+        </div>
+      </div>
     </div>
   </div>
 

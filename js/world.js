@@ -342,14 +342,14 @@ export function createWorld() {
     /* the cake minus the slice: capped shell + the two crumb faces left behind */
     const g = new T.Group();
     const shell = new T.Mesh(
-      new T.CylinderGeometry(r, r, h, 22, 1, false, SLICE / 2, Math.PI * 2 - SLICE),
+      new T.CylinderGeometry(r, r, h, 28, 1, false, SLICE / 2, Math.PI * 2 - SLICE),
       mat(color, { flatShading: false })
     );
     shell.position.y = y;
     g.add(shell);
     [-SLICE / 2, SLICE / 2].forEach((a) => {
       const holder = new T.Group();
-      const face = new T.Mesh(new T.PlaneGeometry(r, h), mat(cutColor, { flatShading: false }));
+      const face = new T.Mesh(new T.PlaneGeometry(r, h), mat(cutColor, { flatShading: false, side: T.DoubleSide }));
       face.position.x = r / 2;
       holder.add(face);
       holder.position.y = y;
@@ -378,14 +378,14 @@ export function createWorld() {
   function wedgeTier(r, h, y, color, cutColor) {
     const g = new T.Group();
     const piece = new T.Mesh(
-      new T.CylinderGeometry(r, r, h, 10, 1, false, -SLICE / 2, SLICE),
+      new T.CylinderGeometry(r, r, h, 14, 1, false, -SLICE / 2, SLICE),
       mat(color, { flatShading: false })
     );
     piece.position.y = y;
     g.add(piece);
     [-SLICE / 2, SLICE / 2].forEach((a) => {
       const holder = new T.Group();
-      const face = new T.Mesh(new T.PlaneGeometry(r, h), mat(cutColor, { flatShading: false }));
+      const face = new T.Mesh(new T.PlaneGeometry(r, h), mat(cutColor, { flatShading: false, side: T.DoubleSide }));
       face.position.x = r / 2;
       holder.add(face);
       holder.position.y = y;
@@ -397,30 +397,50 @@ export function createWorld() {
   wedgeTier(1.2, 0.55, 0.28, 0xffdcea, 0xcf9fb8);
   wedgeTier(0.85, 0.5, 0.8, 0xffc2da, 0xc982a3);
 
-  /* a cherry on top of the slice, because obviously */
-  const cherry = new T.Mesh(
-    new T.SphereGeometry(0.09, 10, 8),
-    new T.MeshLambertMaterial({ color: 0xff5d7d, flatShading: false })
+  /* matching drip on the slice */
+  const wedgeDrip = new T.Mesh(
+    new T.TorusGeometry(0.85, 0.08, 8, 10, SLICE),
+    mat(0xff9ecb, { flatShading: false })
   );
-  cherry.position.set(0.42, 1.14, 0);
+  const wedgeDripG = new T.Group();
+  wedgeDripG.rotation.y = -SLICE / 2;
+  wedgeDrip.rotation.x = Math.PI / 2;
+  wedgeDrip.position.y = 1.03;
+  wedgeDripG.add(wedgeDrip);
+  wedge.add(wedgeDripG);
+
+  /* a cherry on top of the slice */
+  const cherry = new T.Mesh(
+    new T.SphereGeometry(0.09, 12, 10),
+    new T.MeshLambertMaterial({ color: 0xff3b66, flatShading: false })
+  );
+  cherry.position.set(0, 1.13, 0.35);
   wedge.add(cherry);
 
   /* fat invisible cushion so taps on the slice always land */
   const sliceHit = new T.Mesh(
-    new T.SphereGeometry(0.72, 8, 6),
+    new T.SphereGeometry(0.85, 8, 6),
     new T.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
   );
-  sliceHit.position.set(0.5, 0.6, 0);
+  sliceHit.position.set(0, 0.65, 0.45);
   wedge.add(sliceHit);
 
-  /* the plate the slice lands on, far enough that the slice doesn't kiss the cake */
+  /* the plate the slice lands on */
+  const plateG = new T.Group();
   const plate = new T.Mesh(
-    new T.CylinderGeometry(1.04, 0.96, 0.07, 18),
-    mat(0xf3eef7, { flatShading: false })
+    new T.CylinderGeometry(1.2, 1.08, 0.06, 24),
+    mat(0xfffbfc, { flatShading: false })
   );
-  plate.position.set(-2.2, 0.045, 1.1);
-  plate.visible = false;
-  cake.add(plate);
+  const plateRim = new T.Mesh(
+    new T.TorusGeometry(1.16, 0.035, 8, 24),
+    mat(0xffd79e, { flatShading: false })
+  );
+  plateRim.rotation.x = Math.PI / 2;
+  plateRim.position.y = 0.03;
+  plateG.add(plate, plateRim);
+  plateG.position.set(0.25, 0.045, 1.95);
+  plateG.visible = false;
+  cake.add(plateG);
 
   const candles = [];
   const flameMap = glowTex();
@@ -612,11 +632,11 @@ export function createWorld() {
 
     // pull the slice out of the cake and onto its plate
     if (sliceState === "cutting") {
-      cutT = Math.min(1, cutT + dt * 0.85);
+      cutT = Math.min(1, cutT + dt * 0.40);
       const e = easeInOutCubic(cutT);
-      wedge.position.set(-2.2 * e, Math.sin(e * Math.PI) * 0.9 + 0.08 * e, 1.1 * e);
-      wedge.rotation.y = e * -0.94;   // a cut face turns toward the cake-eating camera
-      if (e > 0.55) plate.visible = true;
+      wedge.position.set(0.25 * e, Math.sin(e * Math.PI) * 0.45 + 0.04 * e, 1.95 * e);
+      wedge.rotation.y = e * 0.55;   // a cut face turns toward the cake-eating camera
+      if (e > 0.2) plateG.visible = true;
       if (cutT >= 1) {
         sliceState = "plate";
         cutT = 0;
@@ -624,6 +644,7 @@ export function createWorld() {
     }
 
     updateFX(dt);
+    updateGallery(dt, t);
   }
 
   /* ------------------------------------------------------------- state --- */
@@ -749,10 +770,274 @@ export function createWorld() {
     wedge.rotation.y = 0;
     wedge.scale.setScalar(1);
     wedge.visible = true;
-    plate.visible = false;
+    plateG.visible = false;
     sliceState = "whole";
     cutT = 0;
     bites = 0;
+  }
+
+  /* =========================================================================
+     CASTLE INTERIOR: THE ROYAL PHOTO GALLERY & THE LETTER CHAMBER
+     ========================================================================= */
+  const gallery = new T.Group();
+  gallery.position.set(0, 100, 0);
+  scene.add(gallery);
+
+  // Gallery Ambient Light
+  const galleryAmb = new T.AmbientLight(0xffecd6, 0.65);
+  gallery.add(galleryAmb);
+
+  // Gallery Hallway (width 9, length 28, height 6)
+  // Floor: rich dark polished wood
+  const hallFloor = new T.Mesh(new T.BoxGeometry(9, 0.4, 28), mat(0x231a30, { flatShading: false }));
+  hallFloor.position.set(0, -0.2, 0);
+  gallery.add(hallFloor);
+
+  // Royal Velvet Center Runner Carpet
+  const carpet = new T.Mesh(new T.PlaneGeometry(3.2, 27.6), mat(0x522448, { flatShading: false }));
+  carpet.rotation.x = -Math.PI / 2;
+  carpet.position.set(0, 0.02, 0);
+  gallery.add(carpet);
+
+  // Gold carpet trim lines
+  [-1.6, 1.6].forEach((x) => {
+    const trim = new T.Mesh(new T.PlaneGeometry(0.08, 27.6), mat(0xd4af37, { flatShading: false }));
+    trim.rotation.x = -Math.PI / 2;
+    trim.position.set(x, 0.025, 0);
+    gallery.add(trim);
+  });
+
+  // Ceiling with wooden rafters
+  const ceiling = new T.Mesh(new T.BoxGeometry(9, 0.4, 28), mat(0x191224, { flatShading: false }));
+  ceiling.position.set(0, 5.8, 0);
+  gallery.add(ceiling);
+
+  for (let bz = -12; bz <= 12; bz += 4) {
+    const beam = new T.Mesh(new T.BoxGeometry(9, 0.35, 0.4), mat(0x130d1c, { flatShading: false }));
+    beam.position.set(0, 5.6, bz);
+    gallery.add(beam);
+  }
+
+  // Walls
+  const wallMat = mat(0x322442, { flatShading: false });
+  const leftWall = new T.Mesh(new T.BoxGeometry(0.4, 6, 28), wallMat);
+  leftWall.position.set(-4.5, 2.8, 0);
+  const rightWall = new T.Mesh(new T.BoxGeometry(0.4, 6, 28), wallMat);
+  rightWall.position.set(4.5, 2.8, 0);
+  const backWall = new T.Mesh(new T.BoxGeometry(9, 6, 0.4), wallMat);
+  backWall.position.set(0, 2.8, 14);
+  gallery.add(leftWall, rightWall, backWall);
+
+  // 8 Gilded Photo Frames (4 on left wall, 4 on right wall)
+  const frames = [];
+  const texLoader = new T.TextureLoader();
+  const frameZ = [9, 3, -3, -9];
+
+  // Sconces array for flame animation
+  const sconceFlames = [];
+
+  for (let i = 0; i < 8; i++) {
+    const isLeft = i < 4;
+    const zIdx = i % 4;
+    const z = frameZ[zIdx];
+    const x = isLeft ? -4.28 : 4.28;
+    const rotY = isLeft ? Math.PI / 2 : -Math.PI / 2;
+
+    const frameGroup = new T.Group();
+    frameGroup.position.set(x, 2.3, z);
+    frameGroup.rotation.y = rotY;
+
+    // Ornate gold frame
+    const border = new T.Mesh(
+      new T.BoxGeometry(2.1, 2.7, 0.1),
+      mat(0xd4af37, { flatShading: false })
+    );
+    // Inner matting
+    const matting = new T.Mesh(
+      new T.PlaneGeometry(1.82, 2.42),
+      mat(0xfffef8, { flatShading: false })
+    );
+    matting.position.z = 0.052;
+
+    // The photo canvas itself
+    const photoMat = new T.MeshBasicMaterial({ color: 0xffffff });
+    const photoMesh = new T.Mesh(new T.PlaneGeometry(1.68, 2.24), photoMat);
+    photoMesh.position.z = 0.055;
+
+    // Load user photo from photos/{i+1}.jpg
+    texLoader.load(
+      `photos/${i + 1}.jpg`,
+      (texture) => {
+        texture.encoding = T.sRGBEncoding;
+        photoMesh.material.map = texture;
+        photoMesh.material.needsUpdate = true;
+      },
+      undefined,
+      () => {
+        // Fallback color if not yet uploaded
+        photoMesh.material.color.setHex(0x5a3e75);
+      }
+    );
+
+    // Small brass plaque
+    const plaque = new T.Mesh(
+      new T.BoxGeometry(1.1, 0.22, 0.04),
+      mat(0xffdf88, { flatShading: false })
+    );
+    plaque.position.set(0, -1.5, 0.05);
+
+    // Tap cushion
+    const hit = new T.Mesh(
+      new T.BoxGeometry(2.5, 3.2, 0.6),
+      new T.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+    );
+    hit.userData = { type: "frame", index: i };
+
+    frameGroup.add(border, matting, photoMesh, plaque, hit);
+    gallery.add(frameGroup);
+    frames.push({ group: frameGroup, hit, index: i });
+
+    // Sconce above frame with warm light
+    const sconceLight = new T.PointLight(0xffcb78, 0.8, 6.5, 1.8);
+    sconceLight.position.set(isLeft ? -3.9 : 3.9, 3.9, z);
+    gallery.add(sconceLight);
+
+    const sconceFlame = new T.Sprite(new T.SpriteMaterial({
+      map: flameMap,
+      color: 0xffd27a,
+      blending: T.AdditiveBlending,
+      depthWrite: false,
+    }));
+    sconceFlame.scale.set(0.35, 0.48, 1);
+    sconceFlame.position.set(isLeft ? -4.05 : 4.05, 3.9, z);
+    gallery.add(sconceFlame);
+    sconceFlames.push({ flame: sconceFlame, light: sconceLight, phase: Math.random() * Math.PI * 2 });
+  }
+
+  // Archway at z = -14 leading to Letter Chamber
+  const archL = new T.Mesh(new T.CylinderGeometry(0.32, 0.36, 5.5, 12), mat(0x443258, { flatShading: false }));
+  archL.position.set(-2.2, 2.75, -14);
+  const archR = new T.Mesh(new T.CylinderGeometry(0.32, 0.36, 5.5, 12), mat(0x443258, { flatShading: false }));
+  archR.position.set(2.2, 2.75, -14);
+  const archTop = new T.Mesh(new T.BoxGeometry(4.8, 0.5, 0.6), mat(0x443258, { flatShading: false }));
+  archTop.position.set(0, 5.25, -14);
+  gallery.add(archL, archR, archTop);
+
+  // Cozy Letter Chamber (at z = -20)
+  // Floor
+  const chamberFloor = new T.Mesh(new T.CylinderGeometry(5.2, 5.2, 0.4, 18), mat(0x231a30, { flatShading: false }));
+  chamberFloor.position.set(0, -0.2, -20);
+  gallery.add(chamberFloor);
+
+  // Chamber Walls (semicircular alcove)
+  const alcoveWall = new T.Mesh(
+    new T.CylinderGeometry(5.2, 5.2, 6, 20, 1, true, Math.PI / 2, Math.PI),
+    mat(0x2f213e, { flatShading: false, side: T.DoubleSide })
+  );
+  alcoveWall.position.set(0, 2.8, -20);
+  gallery.add(alcoveWall);
+
+  // Mahogany Round Table
+  const table = new T.Group();
+  table.position.set(0, 0, -20);
+  gallery.add(table);
+
+  const tableTop = new T.Mesh(
+    new T.CylinderGeometry(1.65, 1.55, 0.1, 24),
+    mat(0x351d14, { flatShading: false })
+  );
+  tableTop.position.y = 1.05;
+  const tableCloth = new T.Mesh(
+    new T.CylinderGeometry(1.68, 1.68, 0.04, 24),
+    mat(0x4c2048, { flatShading: false })
+  );
+  tableCloth.position.y = 1.09;
+  const tableLeg = new T.Mesh(
+    new T.CylinderGeometry(0.2, 0.45, 1.0, 12),
+    mat(0x28140c, { flatShading: false })
+  );
+  tableLeg.position.y = 0.5;
+  table.add(tableTop, tableCloth, tableLeg);
+
+  // Antique Brass Candlestick on table
+  const candleHolder = new T.Mesh(
+    new T.CylinderGeometry(0.08, 0.18, 0.28, 12),
+    mat(0xd4af37, { flatShading: false })
+  );
+  candleHolder.position.set(-0.35, 1.25, 0.2);
+  const candleWax = new T.Mesh(
+    new T.CylinderGeometry(0.045, 0.045, 0.35, 10),
+    mat(0xfff6dd, { flatShading: false })
+  );
+  candleWax.position.set(-0.35, 1.52, 0.2);
+  table.add(candleHolder, candleWax);
+
+  // Table Candle Flame + Warm Amber Light
+  const tableLight = new T.PointLight(0xffaf52, 1.4, 5.5, 1.8);
+  tableLight.position.set(0, 2.0, -19.8);
+  gallery.add(tableLight);
+
+  const tableFlame = new T.Sprite(new T.SpriteMaterial({
+    map: flameMap,
+    color: 0xffd27a,
+    blending: T.AdditiveBlending,
+    depthWrite: false,
+  }));
+  tableFlame.scale.set(0.42, 0.58, 1);
+  tableFlame.position.set(-0.35, 1.76, 0.2);
+  table.add(tableFlame);
+
+  // The Birthday Letter on the table
+  const letterMesh = new T.Mesh(
+    new T.BoxGeometry(0.85, 0.02, 1.15),
+    mat(0xfcf5e8, { flatShading: false })
+  );
+  letterMesh.position.set(0.18, 1.12, -0.05);
+  letterMesh.rotation.y = -0.18;
+  table.add(letterMesh);
+
+  // Wax seal on letter
+  const waxSeal = new T.Mesh(
+    new T.CylinderGeometry(0.1, 0.1, 0.025, 16),
+    mat(0x992434, { flatShading: false })
+  );
+  waxSeal.position.set(0.18, 1.14, -0.05);
+  table.add(waxSeal);
+
+  // Sparkles over table
+  const letterSparkle = new T.Sprite(new T.SpriteMaterial({
+    map: flameMap,
+    color: 0xffdf88,
+    blending: T.AdditiveBlending,
+    depthWrite: false,
+  }));
+  letterSparkle.scale.set(0.7, 0.7, 1);
+  letterSparkle.position.set(0.18, 1.4, -0.05);
+  table.add(letterSparkle);
+
+  // Hit box for letter
+  const letterHit = new T.Mesh(
+    new T.SphereGeometry(1.6, 8, 6),
+    new T.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+  );
+  letterHit.position.set(0, 1.3, -20);
+  letterHit.userData = { type: "letter" };
+  gallery.add(letterHit);
+
+  function updateGallery(dt, nowSec) {
+    // Sconce lights gentle breathing
+    for (const s of sconceFlames) {
+      const f = 1 + Math.sin(nowSec * 8 + s.phase) * 0.12;
+      s.flame.scale.set(0.35 * f, 0.48 * (2 - f), 1);
+      s.light.intensity = 0.75 + Math.sin(nowSec * 10 + s.phase) * 0.15;
+    }
+    // Table flame breathing
+    const tf = 1 + Math.sin(nowSec * 9) * 0.14;
+    tableFlame.scale.set(0.42 * tf, 0.58 * (2 - tf), 1);
+    tableLight.intensity = 1.3 + Math.sin(nowSec * 11) * 0.2;
+    // Sparkle gentle bob
+    letterSparkle.position.y = 1.35 + Math.sin(nowSec * 3) * 0.08;
+    letterSparkle.material.opacity = 0.75 + Math.sin(nowSec * 4) * 0.25;
   }
 
   return {
@@ -760,6 +1045,7 @@ export function createWorld() {
     burst, update, wakeCastle, showCake, sleepCastle, hideCake, lightCandle,
     puffCandles, hideOrb, restoreOrbs, focusOrb,
     cutSlice, biteSlice, resetSlice, sliceHit,
+    gallery, frames, letterHit, updateGallery,
     get sliceState() { return sliceState; },
     get cakeTop() { return new T.Vector3(0, 1.6, 2.5); },
   };

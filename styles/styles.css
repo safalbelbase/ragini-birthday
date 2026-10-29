@@ -231,6 +231,112 @@ button.pill{ font-family:var(--f-body); cursor:pointer; }
 }
 .wishes-list p:nth-child(odd){ border-left-color:var(--gold); }
 
+/* ========================================================= gallery & letter === */
+.hud__gallery{
+  display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+  padding:14px 18px calc(14px + var(--safe-b) / 2);
+}
+.hud__gallery .btn{ margin-top:0; min-height:48px; }
+
+/* photo viewer modal */
+.sheet--photo{ top:0; display:flex; align-items:center; background:rgba(6,4,20,.76); }
+.sheet--photo:not([hidden]){ display:flex; }
+.sheet__body--photo{ max-width:440px; padding:22px 20px 18px; }
+.photo-img-wrap{
+  margin:14px auto 16px;
+  max-width:320px;
+  max-height:55vh;
+  border-radius:18px;
+  overflow:hidden;
+  border:3px solid var(--gold);
+  box-shadow:0 12px 34px rgba(0,0,0,.6);
+  background:#1a1329;
+}
+.photo-img-wrap img{
+  width:100%; height:100%;
+  max-height:55vh;
+  object-fit:cover;
+  display:block;
+}
+
+/* handwritten parchment letter */
+.sheet--letter{
+  top:0; bottom:0; left:0; right:0;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(8,5,22,.82);
+  padding:calc(var(--safe-t) + 16px) 14px calc(var(--safe-b) + 16px);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.sheet--letter:not([hidden]){ display:flex; }
+.letter-scroll{ width:100%; max-width:480px; margin:auto; }
+
+.parchment{
+  position:relative;
+  background:
+    radial-gradient(ellipse at 50% 10%, #fffdf6 0%, #f7eedb 60%, #eee1c4 100%);
+  color:#2e1c12;
+  border-radius:24px;
+  padding:32px 24px 26px;
+  box-shadow:
+    0 18px 50px rgba(0,0,0,.65),
+    0 0 0 1px rgba(184,142,88,.3),
+    inset 0 0 40px rgba(175,130,70,.18);
+  font-family:'Caveat', cursive, sans-serif;
+  text-align:left;
+  animation:sheet-up .5s var(--ease) both;
+}
+
+.parchment__seal{
+  position:absolute; top:-18px; left:50%; transform:translateX(-50%);
+  width:44px; height:44px; border-radius:50%;
+  background:linear-gradient(135deg, #a82030, #690c19);
+  color:#ffd98a;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px;
+  box-shadow:0 6px 18px rgba(0,0,0,.45), 0 0 0 3px rgba(255,217,138,.3);
+}
+
+.parchment__body{
+  display:grid; gap:16px; margin-top:8px;
+}
+.parchment__body p{
+  font-size:clamp(21px, 5.8vw, 26px);
+  line-height:1.35;
+  margin:0;
+  letter-spacing:.01em;
+}
+.parchment__body p:first-child{
+  font-size:clamp(25px, 6.8vw, 32px);
+  font-weight:700;
+  color:#6b1522;
+  text-align:center;
+  margin-bottom:6px;
+}
+.parchment__body p:last-child{
+  font-size:clamp(22px, 6vw, 27px);
+  font-weight:700;
+  text-align:right;
+  color:#6b1522;
+  margin-top:10px;
+}
+
+.parchment__actions{
+  display:flex; flex-wrap:wrap; gap:12px; justify-content:center;
+  margin-top:24px;
+  padding-top:18px;
+  border-top:1px dashed rgba(160,116,68,.35);
+}
+.parchment__actions .btn{ margin-top:0; }
+.parchment__actions .btn--ghost{
+  color:#3a2012;
+  border-color:rgba(120,80,45,.4);
+  background:rgba(120,80,45,.08);
+}
+.parchment__actions .btn--ghost:hover{
+  background:rgba(120,80,45,.16);
+}
+
 /* =============================================================== finale === */
 .finale-card{
   max-width:520px;
