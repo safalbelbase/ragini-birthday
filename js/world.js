@@ -97,8 +97,8 @@ export function createWorld() {
   scene.fog = new T.FogExp2(0x2c2166, 0.011);
 
   /* ---- lights ---- */
-  scene.add(new T.HemisphereLight(0xb9c6ff, 0x4a2f6e, 0.85));
-  const moonLight = new T.DirectionalLight(0xd9e4ff, 0.75);
+  scene.add(new T.HemisphereLight(0xb9c6ff, 0x4a2f6e, 0.5));
+  const moonLight = new T.DirectionalLight(0xd9e4ff, 0.55);
   moonLight.position.set(-30, 40, -25);
   scene.add(moonLight);
   const warm = new T.PointLight(0xffd9a0, 0, 10, 2);
@@ -186,11 +186,11 @@ export function createWorld() {
   rockTip.position.y = -7.4;
   island.add(rockTip);
 
-  const grass = new T.Mesh(new T.CylinderGeometry(6.5, 6.35, 0.9, 9), mat(0x54c98d));
+  const grass = new T.Mesh(new T.CylinderGeometry(6.5, 6.35, 0.9, 9), mat(0x255b41));
   grass.position.y = -0.45;
   island.add(grass);
 
-  const rim = new T.Mesh(new T.CylinderGeometry(6.55, 6.5, 0.22, 9), mat(0x8ce6b6));
+  const rim = new T.Mesh(new T.CylinderGeometry(6.55, 6.5, 0.22, 9), mat(0x2b6a4b));
   rim.position.y = -0.02;
   island.add(rim);
 
@@ -203,9 +203,9 @@ export function createWorld() {
     const g = new T.Group();
     const trunk = new T.Mesh(new T.CylinderGeometry(0.12, 0.16, 0.55, 6), mat(0x7a4f3a));
     trunk.position.y = 0.27;
-    const leaf = new T.Mesh(new T.ConeGeometry(0.78, 1.95, 7), mat(0x35a878));
+    const leaf = new T.Mesh(new T.ConeGeometry(0.78, 1.95, 7), mat(0x2f8f68));
     leaf.position.y = 1.4;
-    const leaf2 = new T.Mesh(new T.ConeGeometry(0.55, 1.4, 7), mat(0x49c48d));
+    const leaf2 = new T.Mesh(new T.ConeGeometry(0.55, 1.4, 7), mat(0x3aa878));
     leaf2.position.y = 2.15;
     g.add(trunk, leaf, leaf2);
     g.position.set(x, 0, z);
@@ -589,8 +589,11 @@ export function createWorld() {
       u.halo.scale.set(hs, hs, 1);
       u.ring.material.opacity = 0.6 * u.fa;
       const k = u.fa;
-      u.core.material.color.setRGB(0.42 + 0.58 * k, 0.42 + 0.52 * k, 0.62 + 0.13 * k);
-      u.core.material.emissiveIntensity = 1.2 * k * k;
+      // cool and waiting until it's the one to tap, then hot orange
+      u.core.material.color.setRGB(0.42 + 0.58 * k, 0.42 + 0.03 * k, 0.62 - 0.5 * k);
+      u.core.material.emissive.setRGB(0.4 + 0.6 * k, 0.45 - 0.15 * k, 0.8 - 0.75 * k);
+      u.core.material.emissiveIntensity = 0.25 + 1.05 * k * k;
+      u.halo.material.color.setRGB(1, 0.85 - 0.45 * k, 0.7 - 0.62 * k);
       u.hit.visible = !!u.active;
       const s = 1 + Math.sin(t * 3.1 + u.phase) * 0.06 * u.fa;
       u.core.scale.setScalar(s);
