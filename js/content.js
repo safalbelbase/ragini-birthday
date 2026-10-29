@@ -13,15 +13,15 @@ export const TEXT = {
   hint: "drag to look around · tap the glowing stars",
   cardTap: "tap anywhere to keep going",
 
-  /* the 8 stars — each one pops a little wish */
+  /* the 8 stars — each one pops a little wish, in order */
   stars: [
-    "you make ordinary days feel a little bit magic.",
-    "thank you for laughing at my worst jokes.",
-    "every group chat is better with you in it.",
-    "[write one favourite memory here]",
-    "here's to a million more silly adventures.",
-    "[put a tiny inside joke here]",
-    "the world is nicer because you are in it.",
+    "wishing the coolest bestie ever the happiest birthday.",
+    "may your year be as good as my best jokes.",
+    "wishing you good food, great sleep and zero boring days.",
+    "may today be full of cake, gifts and happy people.",
+    "may you find time in your busy ignoring schedule to reply today.",
+    "may all your wishes come true, even the secret ones.",
+    "wishing your phone full battery every single time i text.",
     "happy birthday, Ragini.",
   ],
 
@@ -34,9 +34,9 @@ export const TEXT = {
   finaleEyebrow: "and so…",
   finaleTitle: "happy birthday, Ragini",
   finaleLines: [
-    "eight little wishes, one big cake, one very happy friend.",
-    "[write your real birthday message here]",
-    "made just for you. from me.",
+    "eight stars, one cake, one very happy bestie.",
+    "no ignoring my texts today, deal?",
+    "made just for you, from your best friend.",
   ],
   readBtn: "see the wishes again",
   againBtn: "play it again",
