@@ -65,13 +65,84 @@ function noise({ dur = 0.4, type = "bandpass", freq = 900, q = 1, vol = 0.3, swe
   src.stop(t0 + dur + 0.05);
 }
 
+/* ------------------------------------------------------------------------
+   music — a soft piano "Happy Birthday", looping quietly under everything.
+   ------------------------------------------------------------------------ */
+const BPM = 78;
+const SPB = 60 / BPM;
+
+/* [midi, beats, chord?] — one pass of the tune, 16 beats plus a breath */
+const TUNE = [
+  [67, 0.75, "C"], [67, 0.25], [69, 0.5], [67, 0.5], [72, 1], [71, 1], [0, 1],
+  [67, 0.75, "F"], [67, 0.25], [69, 0.5], [67, 0.5], [74, 1], [72, 1], [0, 1],
+  [67, 0.75, "C"], [67, 0.25], [79, 0.5], [76, 0.5], [74, 0.5], [72, 0.5], [71, 1],
+  [77, 0.75, "G"], [76, 0.25], [74, 0.5], [71, 0.5], [72, 2, "C"], [0, 2],
+];
+
+const CHORDS = { C: [48, 52, 55], F: [41, 45, 48], G: [43, 47, 50] };
+
+let musicTimer = null;
+let nextAt = 0;
+let step = 0;
+
+function pianoNote(midi, at, dur, vol) {
+  const f = 440 * Math.pow(2, (midi - 69) / 12);
+  const tail = Math.max(0.4, dur * 1.9);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(vol, at + 0.014);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + tail);
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = 2400;
+  g.connect(lp).connect(bus);
+  [[1, 1], [2, 0.4], [3, 0.14], [4, 0.06], [5, 0.03]].forEach(([h, a]) => {
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f * h, at);
+    o.detune.setValueAtTime((h - 3) * 1.5, at);
+    const pg = ctx.createGain();
+    pg.gain.value = a;
+    o.connect(pg).connect(g);
+    o.start(at);
+    o.stop(at + tail + 0.05);
+  });
+}
+
+function scheduleMusic() {
+  if (!ctx) return;
+  const horizon = ctx.currentTime + 1.5;
+  while (nextAt < horizon) {
+    const [midi, beats, chord] = TUNE[step];
+    const dur = beats * SPB;
+    if (midi) pianoNote(midi, nextAt, dur, 0.095);
+    if (chord) CHORDS[chord].forEach((m, i) => pianoNote(m, nextAt + i * 0.014, dur * 2.4, 0.04));
+    nextAt += dur;
+    step = (step + 1) % TUNE.length;
+  }
+}
+
+function startMusic() {
+  if (!ctx || musicTimer) return;
+  nextAt = ctx.currentTime + 0.5;
+  step = 0;
+  scheduleMusic();
+  musicTimer = setInterval(scheduleMusic, 500);
+}
+
 export function setOn(v) {
   on = !!v;
-  if (on) {
-    const c = ensure();
-    if (c && c.state === "suspended") c.resume();
-    sfx("chime");
+  if (!on) {
+    /* suspending freezes the clock, so the music pauses mid-phrase and
+       picks straight back up instead of racing ahead */
+    if (ctx && ctx.state === "running") ctx.suspend();
+    return;
   }
+  const c = ensure();
+  if (!c) return;
+  if (c.state === "suspended") c.resume();
+  startMusic();
+  sfx("chime");
 }
 
 export function isOn() {

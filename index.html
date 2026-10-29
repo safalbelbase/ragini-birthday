@@ -6,6 +6,11 @@
 <title>a little birthday kingdom · for Ragini</title>
 <meta name="description" content="a tiny 3D fairytale kingdom, made just for Ragini">
 <meta name="theme-color" content="#150f36">
+<meta property="og:type" content="website">
+<meta property="og:title" content="a little birthday kingdom · for Ragini">
+<meta property="og:description" content="a tiny 3D fairytale kingdom, made just for Ragini ✦ turn your sound on">
+<meta property="og:image" content="photos/1.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>✦</text></svg>">
@@ -17,6 +22,8 @@
 </head>
 
 <body>
+
+<noscript><p style="padding:28px;text-align:center;font-family:sans-serif;color:#fff6e6">this kingdom needs javascript turned on ✦</p></noscript>
 
 <canvas id="scene" aria-hidden="true"></canvas>
 <div class="glow-frame" aria-hidden="true"></div>
@@ -53,8 +60,8 @@
       <button type="button" class="btn btn--ghost btn--small" id="barBtn2" hidden></button>
     </div>
     <div class="hud__bar hud__gallery" id="galleryBar" hidden>
-      <button type="button" class="btn btn--magic btn--small" id="walkBtn">walk forward ✦</button>
-      <button type="button" class="btn btn--ghost btn--small" id="toLetterBtn">✦ the letter</button>
+      <button type="button" class="btn btn--magic btn--small" id="walkBtn" data-c="walkBtn"></button>
+      <button type="button" class="btn btn--ghost btn--small" id="toLetterBtn" data-c="toLetterBtn"></button>
     </div>
   </div>
 
@@ -75,7 +82,7 @@
       <div class="photo-img-wrap">
         <img id="photoImg" src="" alt="memory photo" />
       </div>
-      <button type="button" class="btn btn--ghost btn--small" id="photoClose">close</button>
+      <button type="button" class="btn btn--ghost btn--small" id="photoClose" data-c="photoClose"></button>
     </div>
   </div>
 
@@ -86,8 +93,8 @@
         <div class="parchment__seal" aria-hidden="true">✦</div>
         <div class="parchment__body" id="letterText"></div>
         <div class="parchment__actions">
-          <button type="button" class="btn btn--magic btn--small" id="letterAgainBtn">✦ play it again</button>
-          <button type="button" class="btn btn--ghost btn--small" id="letterWishesBtn">see the wishes</button>
+          <button type="button" class="btn btn--magic btn--small" id="letterAgainBtn" data-c="againBtn"></button>
+          <button type="button" class="btn btn--ghost btn--small" id="letterWishesBtn" data-c="letterWishesBtn"></button>
         </div>
       </div>
     </div>
@@ -97,7 +104,7 @@
   <div class="sheet sheet--list" id="wishes" hidden>
     <div class="sheet__body">
       <span class="sheet__star" aria-hidden="true">✦</span>
-      <h2 class="sheet__title">the eight wishes</h2>
+      <h2 class="sheet__title" data-c="wishesTitle"></h2>
       <div class="wishes-list" id="wishesList"></div>
       <button type="button" class="btn btn--ghost btn--small" id="wishesClose">close</button>
     </div>

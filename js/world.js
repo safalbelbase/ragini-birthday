@@ -79,6 +79,7 @@ function sprite(color, scale, opacity = 1) {
     opacity,
     depthWrite: false,
     blending: T.AdditiveBlending,
+    fog: false,
   });
   const s = new T.Sprite(m);
   s.scale.set(scale, scale, 1);
@@ -107,7 +108,7 @@ export function createWorld() {
   /* ---- moon + stars ---- */
   const moon = new T.Mesh(
     new T.SphereGeometry(9, 24, 18),
-    new T.MeshBasicMaterial({ color: 0xfff7dd })
+    new T.MeshBasicMaterial({ color: 0xfff7dd, fog: false })
   );
   moon.position.set(-90, 66, -170);
   scene.add(moon);
@@ -141,6 +142,7 @@ export function createWorld() {
       blending: T.AdditiveBlending,
       sizeAttenuation: false,
       color: 0xffffff,
+      fog: false,
     });
     const p = new T.Points(geo, m);
     scene.add(p);
@@ -571,20 +573,26 @@ export function createWorld() {
     clouds.rotation.y += dt * 0.008;
     flag.rotation.y = Math.sin(t * 2.4) * 0.35;
 
-    // wish stars bob and spin (only the active one shines)
+    // wish stars — only the active one shines, and shines hard
     for (const o of orbs) {
       const u = o.userData;
       if (u.gone) continue;
-      const target = u.active ? 1 : 0.14;
+      const target = u.active ? 1 : 0.13;
       if (u.fa == null) u.fa = target;
       u.fa += (target - u.fa) * Math.min(1, dt * 6);
+      const pulse = u.active ? 1 + Math.sin(t * 3.4 + u.phase) * 0.16 : 1;
       o.position.y = u.base + Math.sin(t * 1.2 + u.phase) * 0.24;
-      u.ring.rotation.z += dt * 1.1;
-      u.halo.material.opacity = (0.65 + Math.sin(t * 2.6 + u.phase) * 0.2) * u.fa;
-      u.ring.material.opacity = 0.55 * u.fa;
-      u.core.material.emissiveIntensity = 0.95 * u.fa + 0.05;
+      o.scale.setScalar(0.74 + 0.3 * u.fa);
+      u.ring.rotation.z += dt * (0.6 + u.fa * 1.4);
+      u.halo.material.opacity = (0.62 + Math.sin(t * 2.6 + u.phase) * 0.24) * u.fa;
+      const hs = (0.9 + 2.7 * u.fa) * pulse;
+      u.halo.scale.set(hs, hs, 1);
+      u.ring.material.opacity = 0.6 * u.fa;
+      const k = u.fa;
+      u.core.material.color.setRGB(0.42 + 0.58 * k, 0.42 + 0.52 * k, 0.62 + 0.13 * k);
+      u.core.material.emissiveIntensity = 1.2 * k * k;
       u.hit.visible = !!u.active;
-      const s = 1 + Math.sin(t * 3.1 + u.phase) * 0.06;
+      const s = 1 + Math.sin(t * 3.1 + u.phase) * 0.06 * u.fa;
       u.core.scale.setScalar(s);
     }
 
@@ -789,8 +797,8 @@ export function createWorld() {
 
   // Gallery Hallway (width 9, length 28, height 6)
   // Floor: rich dark polished wood
-  const hallFloor = new T.Mesh(new T.BoxGeometry(9, 0.4, 28), mat(0x231a30, { flatShading: false }));
-  hallFloor.position.set(0, -0.2, 0);
+  const hallFloor = new T.Mesh(new T.BoxGeometry(9, 0.4, 30), mat(0x231a30, { flatShading: false }));
+  hallFloor.position.set(0, -0.2, -1);
   gallery.add(hallFloor);
 
   // Royal Velvet Center Runner Carpet
@@ -868,7 +876,6 @@ export function createWorld() {
     texLoader.load(
       `photos/${i + 1}.jpg`,
       (texture) => {
-        texture.encoding = T.sRGBEncoding;
         photoMesh.material.map = texture;
         photoMesh.material.needsUpdate = true;
       },

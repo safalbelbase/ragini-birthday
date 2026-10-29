@@ -1,16 +1,29 @@
 # Castle Gallery Photos ✦
 
-Drop your photos directly into this folder (`photos/`) using these exact filenames:
+Drop your photos into this folder (`photos/`) with these **exact** names.
+The code asks for `.jpg` only — a `.png` will NOT be picked up, so export
+or screenshot-convert them to `.jpg` first.
 
-- `1.jpg` — Photo 1 (Memory 1)
-- `2.jpg` — Photo 2 (Memory 2)
-- `3.jpg` — Photo 3 (Memory 3)
-- `4.jpg` — Photo 4 (Memory 4)
-- `5.jpg` — Photo 5 (Memory 5)
-- `6.jpg` — Photo 6 (Memory 6)
-- `7.jpg` — Photo 7 (Memory 7)
-- `8.jpg` — Photo 8 (Memory 8)
+| File | Where it shows up | Caption under the frame |
+|---|---|---|
+| `1.jpg` | 1st frame, left wall (nearest the door) | memory 1 · star catcher |
+| `2.jpg` | 2nd frame, left wall | memory 2 · midnight chats |
+| `3.jpg` | 3rd frame, left wall | memory 3 · laughing at nothing |
+| `4.jpg` | 4th frame, left wall (nearest the arch) | memory 4 · online bestie |
+| `5.jpg` | 1st frame, right wall (nearest the door) | memory 5 · late replies & tea |
+| `6.jpg` | 2nd frame, right wall | memory 6 · favorite moments |
+| `7.jpg` | 3rd frame, right wall | memory 7 · always in your corner |
+| `8.jpg` | 4th frame, right wall (nearest the arch) | memory 8 · happy 18th ragini |
 
-### Supported formats:
-- `.jpg` or `.jpeg` (or `.png` — if you drop `1.png`, it also works seamlessly)
-- Recommended aspect ratio: Portrait (~3:4 or 4:5), but any ratio will be neatly fit inside the fairytale gold frames!
+Captions live in `js/content.js` → `photoTitles[]`. Change them there, and
+change the file names here — both must agree on the order.
+
+## Tips
+
+- **Portrait, roughly 3:4 or 4:5**, looks best — the frames are tall.
+- Around **600×800 to 1200×1600 px** is plenty. Anything bigger just makes
+  the page slow to load on a phone; keep each file under ~300 KB.
+- Faces near the **centre**: the photo is cropped to fit the frame
+  (`object-fit: cover` in the pop-up viewer), so anything at the very top
+  or bottom edge may be cut off.
+- Missing a photo? The frame falls back to a plain purple card, nothing breaks.

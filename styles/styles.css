@@ -23,6 +23,7 @@
 }
 
 *,*::before,*::after{ box-sizing:border-box; }
+[hidden]{ display:none !important; }
 
 html,body{
   height:100%;
@@ -218,7 +219,13 @@ button.pill{ font-family:var(--f-body); cursor:pointer; }
 .sheet__title{
   font-family:var(--f-title); font-size:26px; margin:10px 0 4px; color:var(--gold);
 }
-.sheet--list{ top:0; display:flex; align-items:center; background:rgba(6,4,20,.72); }
+.sheet--list{
+  top:0; display:flex; align-items:flex-start;
+  background:rgba(6,4,20,.72);
+  padding:calc(var(--safe-t) + 16px) 14px calc(var(--safe-b) + 16px);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
 .sheet--list:not([hidden]){ display:flex; }
 .wishes-list{ display:grid; gap:12px; margin:14px 0 6px; text-align:left; }
 .wishes-list p{
@@ -336,27 +343,6 @@ button.pill{ font-family:var(--f-body); cursor:pointer; }
 .parchment__actions .btn--ghost:hover{
   background:rgba(120,80,45,.16);
 }
-
-/* =============================================================== finale === */
-.finale-card{
-  max-width:520px;
-  background:var(--card);
-  border:2px solid var(--line);
-  border-radius:32px;
-  padding:34px 26px calc(30px + var(--safe-b) / 2);
-  box-shadow:0 30px 70px rgba(0,0,0,.6), 0 0 60px rgba(255,180,94,.16);
-}
-.finale-lines{ display:grid; gap:14px; margin-top:22px; }
-.finale-lines p{
-  font-size:18px; line-height:1.5; color:#f3eeff; margin:0;
-  opacity:0; animation:line-in .7s var(--ease) forwards;
-}
-.finale-lines p:first-child{ font-family:var(--f-title); font-size:23px; color:var(--gold); }
-.finale-lines p:last-child{ font-style:italic; color:var(--pink); }
-@keyframes line-in{ from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:none } }
-
-.finale-actions{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:26px; }
-.finale-actions .btn{ margin-top:0; }
 
 /* ============================================================== a11y ===== */
 @media (prefers-reduced-motion: reduce){

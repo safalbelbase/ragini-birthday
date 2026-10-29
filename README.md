@@ -23,16 +23,24 @@ GitHub Pages (already configured with `.nojekyll`).
 
 Everything the player reads lives in **js/content.js**:
 
-- `stars[]` — the 8 wishes (two are left as `[placeholders]` on purpose)
-- `finaleTitle` + `finaleLines` — the birthday message
+- `stars[]` — the 8 wishes (one per collectible star)
+- `letter[]` — the birthday letter; the last line is the signature
+- `photoTitles[]` — the caption on each of the 8 gallery frames
 - `title` / `subtitle` — names
-- Colors live in `styles/styles.css` (`:root` tokens)
-- The world (island, castle, cake) lives in `js/world.js`
+- Every button label is a key in here, wired up by `data-c` in `index.html`
+
+The actual photos go in **photos/** as `1.jpg` … `8.jpg` — see
+`photos/README.md` for which frame is which.
+
+Colors live in `styles/styles.css` (`:root` tokens).
+The world (island, castle, cake, gallery) lives in `js/world.js`.
+The piano background loop lives in `js/audio.js` (`TUNE` / `BPM`).
 
 ## Tech
 
 - three.js r149 (vendored, MIT license inside the file)
-- Fraunces + Nunito, self-hosted latin subsets (SIL OFL 1.1) in `fonts/`
-- All sounds are procedural WebAudio, no audio files
-- Debug helpers under `window.__kingdom` (tap positions, state)
+- Fraunces + Nunito + Caveat, self-hosted latin subsets (SIL OFL 1.1) in `fonts/`
+- All sound is procedural WebAudio — no audio files. The ♪ button suspends
+  the whole AudioContext, so the music pauses and resumes in place.
+- Debug helpers under `window.__kingdom` (star/candle screen positions, state)
 - Regenerate font subsets: `node tools/fetch-fonts.mjs`

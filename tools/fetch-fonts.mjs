@@ -8,7 +8,7 @@ const UA =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 const API =
-  "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@400;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@400;600;700&family=Caveat:wght@500;700&display=swap";
 
 const css = await (await fetch(API, { headers: { "User-Agent": UA } })).text();
 
@@ -28,7 +28,7 @@ for (const b of blocks) {
 }
 
 mkdir(new URL("../fonts/", import.meta.url), { recursive: true });
-let out = `/* Self-hosted latin subsets: Fraunces + Nunito - SIL Open Font License 1.1 */\n`;
+let out = `/* Self-hosted latin subsets: Fraunces + Nunito + Caveat - SIL Open Font License 1.1 */\n`;
 const seen = new Map();
 for (const j of jobs) {
   const buf = Buffer.from(

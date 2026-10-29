@@ -31,7 +31,6 @@ export function createGame({ canvas, callbacks }) {
     return null; // no WebGL on this device
   }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.outputEncoding = window.THREE.sRGBEncoding;
 
   const world = createWorld();
   const scene = world.scene;
@@ -82,7 +81,6 @@ export function createGame({ canvas, callbacks }) {
       return;
     }
     sfx("whoosh");
-    dbg.fly = (dbg.fly || 0) + 1;
     tween = {
       from: {
         theta: cam.theta,
@@ -121,7 +119,6 @@ export function createGame({ canvas, callbacks }) {
   let multi = false;
   let pinchStart = 0;
   let pinchRadius = 0;
-  const dbg = { down: 0, up: 0, tap: 0, cond: null, hits: null };
 
   function ndc(e) {
     const r = canvas.getBoundingClientRect();
@@ -136,7 +133,6 @@ export function createGame({ canvas, callbacks }) {
     moved = 0;
     dragging = false;
     try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* synthetic pointers */ }
-    dbg.down++;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     multi = pointers.size >= 2;
     if (pointers.size === 2) {
@@ -167,8 +163,11 @@ export function createGame({ canvas, callbacks }) {
     if (moved > 8) {
       dragging = true;
       /* don't orphan a scripted flight: run its done() before killing the tween */
-      if (tween && tween.done) { const d = tween.done; tween = null; dbg.kill = (dbg.kill || 0) + 1; d(); }
-      else if (tween) { tween = null; dbg.kill = (dbg.kill || 0) + 1; }
+      if (tween) {
+        const done = tween.done;
+        tween = null;
+        if (done) done();
+      }
       autoSpin = false;
       lastTouch = performance.now();
       if (state === "gallery" || state === "letter") {
@@ -183,18 +182,10 @@ export function createGame({ canvas, callbacks }) {
   });
 
   function endPointer(e) {
-    dbg.up++;
     const wasDrag = dragging;
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchStart = 0;
-    dbg.cond = {
-      wasDrag, size: pointers.size,
-      dt: Math.round(performance.now() - downAt),
-      moved: Math.round(moved),
-      type: e.type,
-    };
     if (!wasDrag && !multi && pointers.size === 0 && performance.now() - downAt < 700 && moved < 10) {
-      dbg.tap++;
       tap(e);
     }
     dragging = false;
@@ -220,8 +211,6 @@ export function createGame({ canvas, callbacks }) {
         .filter((o) => !o.userData.gone && o.userData.active)
         .map((o) => o.userData.hit);
       const hit = pick(targets, e);
-      const p = ndc(e);
-      dbg.hits = { n: targets.length, got: !!hit, e: [Math.round(p.x * 100), Math.round(p.y * 100)] };
       if (hit) {
         const orb = world.orbs.find((o) => o.userData.hit === hit);
         if (orb) collect(orb);
@@ -319,12 +308,8 @@ export function createGame({ canvas, callbacks }) {
     flyTo(CAKE_VIEW, reduced ? 0 : 2.1, () => {
       world.wakeCastle();
       state = "candles";
-      if (cb.onCakeReady) onCakeReadySafe();
+      if (cb.onCakeReady) cb.onCakeReady();
     });
-  }
-
-  function onCakeReadySafe() {
-    if (cb.onCakeReady) cb.onCakeReady();
   }
 
   function lightCandle(i) {
@@ -463,7 +448,6 @@ export function createGame({ canvas, callbacks }) {
   let t = 0;
   let last = performance.now();
   let raf = 0;
-  let running = false;
 
   function frame(now) {
     raf = requestAnimationFrame(frame);
@@ -508,7 +492,6 @@ export function createGame({ canvas, callbacks }) {
 
   resize();
   applyCamera();
-  running = true;
   raf = requestAnimationFrame(frame);
 
   /* where the wish stars are on screen right now (handy for testing) */
@@ -588,13 +571,11 @@ export function createGame({ canvas, callbacks }) {
     candleScreens,
     sliceScreens,
     debugRay,
-    dbg,
     get state() { return state; },
     get found() { return found; },
     get world() { return world; },
     dispose() {
       cancelAnimationFrame(raf);
-      running = false;
       window.removeEventListener("resize", resize);
       renderer.dispose();
     },

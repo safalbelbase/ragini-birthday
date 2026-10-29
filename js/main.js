@@ -66,11 +66,12 @@ function showHint(text, ms, fallback) {
 /* --------------------------------------------------------------- start --- */
 function startGame() {
   setOn(true);
+  paintSound();
   sfx("sparkle");
   startScreen.classList.remove("is-on");
   startScreen.hidden = true;
   hud.hidden = false;
-  progress.textContent = TEXT.progress(0, 8);
+  progress.textContent = TEXT.progress(0, TEXT.stars.length);
   showHint(TEXT.hint);
   game.start();
   say("the kingdom is open. one star at a time is glowing.");
@@ -109,7 +110,11 @@ function setBar({ line, sub, btn, btn2, phase }) {
   barWrap.hidden = false;
 }
 
+const PHASE_STATE = { wish: "wish", cut: "finale", castle: "castle" };
+
 barBtn.addEventListener("click", () => {
+  /* ignore a stale bar: the phase must match where the game actually is */
+  if (!game || game.state !== PHASE_STATE[barPhase]) return;
   sfx("tap");
   barWrap.hidden = true;
   if (barPhase === "wish") game.makeWish();
@@ -127,8 +132,11 @@ function playAgain() {
   galleryBar.hidden = true;
   photoModal.hidden = true;
   letterModal.hidden = true;
+  $("#wishes").hidden = true;
+  card.hidden = true;
   pillWishes.hidden = true;
-  progress.textContent = TEXT.progress(0, 8);
+  barPhase = "wish";
+  progress.textContent = TEXT.progress(0, TEXT.stars.length);
   showHint(TEXT.hint);
   game.reset();
   sfx("chime");
@@ -211,8 +219,8 @@ function boot() {
         showHint(`${TEXT.allFoundLine} · ${TEXT.allFoundSub}`, 5000);
       },
       onCakeReady() {
-        showHint(TEXT.cakeLine, 999000, TEXT.cakeLine);
-        progress.textContent = "cake ✦ 0 / 8";
+        showHint(TEXT.cakeLine);
+        progress.textContent = `cake ✦ 0 / ${TEXT.stars.length}`;
       },
       onCandleLit(n, total) {
         progress.textContent = `cake ✦ ${n} / ${total}`;
@@ -221,16 +229,16 @@ function boot() {
       onAllCandles() {
         /* the wish moment: her time, unhurried */
         setBar({ line: TEXT.wishLine, sub: TEXT.wishSub, btn: TEXT.wishBtn, phase: "wish" });
-        showHint(TEXT.wishLine, 999000, TEXT.cakeLine);
+        showHint(TEXT.wishLine);
         say(`all candles are lit. ${TEXT.wishLine}.`);
       },
       onCutReady() {
         setBar({ line: TEXT.cutLine, btn: TEXT.cutBtn, phase: "cut" });
-        showHint(TEXT.cutLine, 999000);
+        showHint(TEXT.cutLine);
         say(TEXT.cutLine);
       },
       onEatReady() {
-        showHint(TEXT.eatHint, 999000, TEXT.cutLine);
+        showHint(TEXT.eatHint);
         progress.textContent = "nom 0 / 3";
       },
       onBite(n) {
@@ -250,7 +258,7 @@ function boot() {
         barWrap.hidden = true;
         galleryBar.hidden = false;
         progress.textContent = TEXT.galleryPill;
-        showHint(TEXT.galleryHint, 8000);
+        showHint(TEXT.galleryHint, 12000, TEXT.galleryHint);
       },
       onPhoto(index) {
         openPhotoModal(index);

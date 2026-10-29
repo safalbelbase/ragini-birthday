@@ -44,13 +44,17 @@ export const TEXT = {
   ],
   afterEat: "you're officially 18 now. one last thing is waiting in the castle ✦",
   readBtn: "see the wishes again",
-  againBtn: "play it again",
+  againBtn: "✦ play it again",
   enterCastleBtn: "enter the castle ✦",
   pillWishes: "✦ wishes",
+  wishesTitle: "the eight wishes",
+  letterWishesBtn: "see the wishes",
+  photoClose: "close",
+  wishesClose: "close",
 
   galleryPill: "castle gallery",
   galleryHint: "drag to look · move to explore · tap photos",
-  readLetterBtn: "read the letter ✦",
+  walkBtn: "walk forward ✦",
   toLetterBtn: "✦ the letter",
   photoTitles: [
     "memory 1 · star catcher",
@@ -69,7 +73,8 @@ export const TEXT = {
     "i hope eighteen brings you everything you've been working toward, plenty of good food, zero boring days, and maybe just a little more time in your busy schedule to text back on the same day.",
     "enjoy your day, eat lots of cake, and make the biggest wish possible. you deserve the best year ahead.",
     "happy birthday ragini.",
-    "your best friend"
+    "your best friend,",
+    "Safal",
   ],
 
   noGlTitle: "this phone says no",
@@ -79,8 +84,3 @@ export const TEXT = {
   soundOn: "sound on",
   soundOff: "sound off",
 };
-
-/* small helper: {name} inside a string gets replaced */
-export function fill(str, vars = {}) {
-  return String(str).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
-}
